@@ -49,10 +49,10 @@ generateCrt () {
   echo 'begin updating default cert by acme.sh tool'
   source ${ACME_BIN_PATH}/acme.sh.env
   ${ACME_BIN_PATH}/acme.sh --force --log --issue --dns ${DNS} --dnssleep ${DNS_SLEEP} -d "${DOMAIN}" -d "*.${DOMAIN}"
-  ${ACME_BIN_PATH}/acme.sh --force --installcert -d ${DOMAIN} -d *.${DOMAIN} \
+  ${ACME_BIN_PATH}/acme.sh --installcert -d ${DOMAIN} -d *.${DOMAIN} \
     --certpath ${CRT_PATH}/cert.pem \
     --key-file ${CRT_PATH}/privkey.pem \
-    --fullchain-file ${CRT_PATH}/fullchain.pem
+    --fullchain-file ${CRT_PATH}/chain.pem
 
   if [ -s "${CRT_PATH}/cert.pem" ]; then
     echo 'done generateCrt'
@@ -68,18 +68,14 @@ generateCrt () {
 updateService () {
   echo 'begin updateService'
   echo 'cp cert path to des'
-  /bin/python2 ${BASE_ROOT}/crt_cp.py ${CRT_PATH_NAME}
+  /bin/python ${BASE_ROOT}/crt_cp.py ${CRT_PATH_NAME}
   echo 'done updateService'
 }
 
 reloadWebService () {
   echo 'begin reloadWebService'
   echo 'reloading new cert...'
-  /usr/syno/etc/rc.sysv/nginx.sh reload
-  echo 'relading Apache 2.2'
-  stop pkg-apache22
-  start pkg-apache22
-  reload pkg-apache22
+  synow3tool --gen-all && systemctl reload nginx
   echo 'done reloadWebService'  
 }
 
